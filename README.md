@@ -6,7 +6,7 @@
 
 ## Table of Contents
 
-1. [Motivation](#1-motivation)
+1. [Why and Motivation](#1-why-and-motivation)
 2. [Notation and Setup](#2-notation-and-setup)
 3. [The Three GEMMs — Derivation from Matrix Calculus](#3-the-three-gemms--derivation-from-matrix-calculus)
    - [3.1 Forward Pass — GEMM #1](#31-forward-pass--gemm-1)
@@ -26,7 +26,7 @@
 
 ---
 
-## 1. Motivation
+## 1. Why and motivation
 
 When you call `loss.backward()` in PyTorch, the autograd engine dispatches a sequence of GPU kernel launches. For any `nn.Linear` layer, those launches reduce to three `cublasSgemm` calls — one for the forward pass, two for the backward pass.
 
@@ -38,7 +38,7 @@ This fact has profound consequences:
 
 Yet most ML courses teach backpropagation as element-wise partial derivatives and chain rule diagrams. The jump from $\frac{\partial L}{\partial w_{ij}}$ to `cublasSgemm(handle, CUBLAS_OP_T, ...)` is never shown.
 
-This article fills that gap.
+This article fills that gap. The practical implementation and an optimization sequence for these GEMM calls can be found in the companion repository: [re-engineering-cublas](https://github.com/danepham2204/re-engineering-cublas).
 
 ---
 
@@ -102,9 +102,9 @@ The scalar change in loss is:
 
 $$dL = \text{tr}\!\left(\left(\frac{\partial L}{\partial Y}\right)^{\!T} dY\right) = \text{tr}\!\left(\left(\frac{\partial L}{\partial Y}\right)^{\!T} X \cdot dW\right)$$
 
-Applying the cyclic property of trace: $\text{tr}(ABC) = \text{tr}(CAB)$
+Using the matrix transpose property $(AB)^T = B^T A^T$:
 
-$$dL = \text{tr}\!\left(\underbrace{X^T \frac{\partial L}{\partial Y}}_{\text{this is } \frac{\partial L}{\partial W}} \cdot dW\right)^{\!T} \cdot dW\right)$$
+$$dL = \text{tr}\!\left(\left(\underbrace{X^T \frac{\partial L}{\partial Y}}_{\text{this is } \frac{\partial L}{\partial W}}\right)^{\!T} \cdot dW\right)$$
 
 Wait — let's be careful. The definition of the matrix gradient is:
 
@@ -318,7 +318,7 @@ Reading a column of a row-major matrix means jumping $N$ elements between consec
 
 This is the **transpose tax**: the backward pass's two GEMMs inherently have worse memory access patterns than the forward pass. This is one reason why `loss.backward()` typically takes **2–3× longer** than the forward pass, even though it performs exactly 2× the arithmetic.
 
-High-performance GEMM kernels handle this through **shared memory staging**: the transposed operand is loaded tile-by-tile into shared memory (which has no coalescing requirement), then read from shared memory in the optimal layout. This is exactly what Versions 02–10 in [rebuilding-cublas](../rebuilding-cublas) implement.
+High-performance GEMM kernels handle this through **shared memory staging**: the transposed operand is loaded tile-by-tile into shared memory (which has no coalescing requirement), then read from shared memory in the optimal layout. This is exactly what Versions 02–10 in [re-engineering-cublas](https://github.com/danepham2204/re-engineering-cublas) implement.
 
 ---
 
@@ -447,7 +447,7 @@ Since each GEMM call is identical in structure, switching from FP32 to FP16 acce
 
 ### 9.3 Connection to GEMM Kernel Optimization
 
-If the three GEMMs are the bottleneck, then **optimizing GEMM is optimizing training**. The optimization trajectory in [rebuilding-cublas](../rebuilding-cublas) directly applies:
+If the three GEMMs are the bottleneck, then **optimizing GEMM is optimizing training**. The optimization trajectory in [re-engineering-cublas](https://github.com/danepham2204/re-engineering-cublas) directly applies:
 
 ```
 Naive SGEMM (v01):        465 GFLOP/s  ← if your GEMM is this slow,
@@ -482,4 +482,4 @@ Understanding this bridge — from the chain rule to `cublasSgemm` — transform
 - Petersen & Pedersen — _The Matrix Cookbook_ (2012) — compact reference for matrix derivative identities
 - NVIDIA — [cuBLAS Library Documentation](https://docs.nvidia.com/cuda/cublas/index.html)
 - NVIDIA — [CUDA C++ Best Practices Guide: Coalesced Access to Global Memory](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html)
-- **rebuilding-cublas** — [Rebuilding cuBLAS: From a Naive CUDA Kernel to a Tensor Core Pipeline](../rebuilding-cublas) — 10-version optimization sequence demonstrating the kernel engineering behind each GEMM call
+- **re-engineering-cublas** — [Re-engineering cuBLAS: From a Naive CUDA Kernel to a Tensor Core Pipeline](https://github.com/danepham2204/re-engineering-cublas) — 10-version optimization sequence demonstrating the kernel engineering behind each GEMM call
