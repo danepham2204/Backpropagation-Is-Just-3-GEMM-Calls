@@ -48,12 +48,12 @@ Consider a single fully-connected (linear) layer with no bias:
 
 $$Y = XW$$
 
-| Symbol | Shape | Description |
-|:-------|:------|:------------|
-| $X$ | $M \times K$ | Input batch — $M$ samples, $K$ input features |
-| $W$ | $K \times N$ | Weight matrix — $K$ inputs mapped to $N$ outputs |
-| $Y$ | $M \times N$ | Output — $M$ samples, $N$ output features |
-| $L$ | scalar | Loss function value (e.g., cross-entropy) |
+| Symbol                          | Shape        | Description                                       |
+| :------------------------------ | :----------- | :------------------------------------------------ |
+| $X$                             | $M \times K$ | Input batch — $M$ samples, $K$ input features     |
+| $W$                             | $K \times N$ | Weight matrix — $K$ inputs mapped to $N$ outputs  |
+| $Y$                             | $M \times N$ | Output — $M$ samples, $N$ output features         |
+| $L$                             | scalar       | Loss function value (e.g., cross-entropy)         |
 | $\frac{\partial L}{\partial Y}$ | $M \times N$ | Upstream gradient — received from the layer above |
 
 The training loop computes three things:
@@ -309,10 +309,10 @@ Since cuBLAS sees row-major data as already transposed, we compute $C^T$ and the
 
 Notice that **2 out of 3 GEMMs require a transposed operand.** On the GPU, transposition is not a separate operation — it changes the memory **access pattern**:
 
-| Access Pattern | Stride Between Consecutive Elements | Effect |
-|:---------------|:------------------------------------|:-------|
-| Normal (row of row-major) | 1 element = 4 bytes | Coalesced — 1 cache line per warp |
-| Transposed (column of row-major) | $N$ elements = $4N$ bytes | Strided — up to 32 cache lines per warp |
+| Access Pattern                   | Stride Between Consecutive Elements | Effect                                  |
+| :------------------------------- | :---------------------------------- | :-------------------------------------- |
+| Normal (row of row-major)        | 1 element = 4 bytes                 | Coalesced — 1 cache line per warp       |
+| Transposed (column of row-major) | $N$ elements = $4N$ bytes           | Strided — up to 32 cache lines per warp |
 
 Reading a column of a row-major matrix means jumping $N$ elements between consecutive reads. For $N = 4096$, that's a stride of 16 KB between consecutive warp lanes — every thread hits a different cache line.
 
@@ -396,11 +396,11 @@ The analytic gradients (from 2 matrix multiplications) match the brute-force num
 
 A network with $L$ linear layers performs:
 
-| Phase | GEMM Calls | Total |
-|:------|:-----------|:------|
-| Forward | $L$ | $L$ |
-| Backward | $2L$ | $2L$ |
-| **Total** | | **$3L$** |
+| Phase     | GEMM Calls | Total    |
+| :-------- | :--------- | :------- |
+| Forward   | $L$        | $L$      |
+| Backward  | $2L$       | $2L$     |
+| **Total** |            | **$3L$** |
 
 For a 12-layer Transformer encoder with 4 linear projections per layer (Q, K, V, output):
 
@@ -477,10 +477,9 @@ Understanding this bridge — from the chain rule to `cublasSgemm` — transform
 
 ## 11. References
 
-- Deisenroth, Faisal & Ong — *Mathematics for Machine Learning* (2020), Chapter 5: Vector Calculus
-- Magnus & Neudecker — *Matrix Differential Calculus with Applications in Statistics and Econometrics* (2019) — the definitive reference for the trace/differential technique
-- Petersen & Pedersen — *The Matrix Cookbook* (2012) — compact reference for matrix derivative identities
+- Deisenroth, Faisal & Ong — _Mathematics for Machine Learning_ (2020), Chapter 5: Vector Calculus
+- Magnus & Neudecker — _Matrix Differential Calculus with Applications in Statistics and Econometrics_ (2019) — the definitive reference for the trace/differential technique
+- Petersen & Pedersen — _The Matrix Cookbook_ (2012) — compact reference for matrix derivative identities
 - NVIDIA — [cuBLAS Library Documentation](https://docs.nvidia.com/cuda/cublas/index.html)
 - NVIDIA — [CUDA C++ Best Practices Guide: Coalesced Access to Global Memory](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html)
 - **rebuilding-cublas** — [Rebuilding cuBLAS: From a Naive CUDA Kernel to a Tensor Core Pipeline](../rebuilding-cublas) — 10-version optimization sequence demonstrating the kernel engineering behind each GEMM call
-# Backpropagation-Is-Just-3-GEMM-Calls
