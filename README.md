@@ -72,6 +72,8 @@ Each of these is a single GEMM.
 
 ### 3.1 Forward Pass — GEMM #1
 
+![Forward Pass — GEMM #1: Y = X · W](img/forward_pass_gemm_1.png)
+
 $$\boxed{Y = X \cdot W}$$
 
 This is the definition of the layer. Element-wise:
@@ -89,6 +91,8 @@ Nothing surprising here. The key insight comes in the backward pass.
 ---
 
 ### 3.2 Weight Gradient — GEMM #2
+
+![Backward Pass — GEMM #2 & #3: Weight and Input Gradients](img/backward_pass_gemm_2_3.png)
 
 We need $\frac{\partial L}{\partial W}$ — a $K \times N$ matrix that tells us how to update each weight.
 
