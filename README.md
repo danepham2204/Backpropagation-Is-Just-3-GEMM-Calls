@@ -2,6 +2,8 @@
 
 > Every deep learning framework hides the same secret in plain sight: a fully-connected layer's entire training cycle — forward, weight gradient, input gradient — is three calls to `cublasSgemm`. No loops, no element-wise logic, no special cases. Just three matrix multiplies. This article derives **why** from first principles and shows **what happens on the GPU** when each one executes.
 
+![Three cuBLAS GEMM Calls](img/three_cublas_gemm_calls.png)
+
 ---
 
 ## Table of Contents
