@@ -2,8 +2,6 @@
 
 > Every deep learning framework hides the same secret in plain sight: a fully-connected layer's entire training cycle — forward, weight gradient, input gradient — is three calls to `cublasSgemm`. No loops, no element-wise logic, no special cases. Just three matrix multiplies. This article derives **why** from first principles and shows **what happens on the GPU** when each one executes.
 
-![Three cuBLAS GEMM Calls](img/three_cublas_gemm_calls.png)
-
 ---
 
 ## Table of Contents
@@ -72,8 +70,6 @@ Each of these is a single GEMM.
 
 ### 3.1 Forward Pass — GEMM #1
 
-![Forward Pass — GEMM #1: Y = X · W](img/forward_pass_gemm_1.png)
-
 $$\boxed{Y = X \cdot W}$$
 
 This is the definition of the layer. Element-wise:
@@ -91,8 +87,6 @@ Nothing surprising here. The key insight comes in the backward pass.
 ---
 
 ### 3.2 Weight Gradient — GEMM #2
-
-![Backward Pass — GEMM #2 & #3: Weight and Input Gradients](img/backward_pass_gemm_2_3.png)
 
 We need $\frac{\partial L}{\partial W}$ — a $K \times N$ matrix that tells us how to update each weight.
 
